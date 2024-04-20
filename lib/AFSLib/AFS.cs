@@ -43,7 +43,7 @@ namespace AFSLib
         /// <summary>
         /// Event that will be called each time some process wants to report something.
         /// </summary>
-        public event NotifyProgressDelegate NotifyProgress;
+        public event NotifyProgressDelegate? NotifyProgress;
 
         /// <summary>
         /// Represents the method that will handle the NotifyProgress event.
@@ -85,7 +85,7 @@ namespace AFSLib
             AttributesInfoType = AttributesInfoType.InfoAtBeginning;
             EntryBlockAlignment = 0x800;
 
-            afsStream = null;
+            afsStream = Stream.Null;
             leaveAfsStreamOpen = true;
 
             isDisposed = false;
@@ -133,10 +133,10 @@ namespace AFSLib
         {
             CheckDisposed();
 
-            if (afsStream != null && !leaveAfsStreamOpen)
+            if (afsStream != Stream.Null && !leaveAfsStreamOpen)
             {
                 afsStream.Dispose();
-                afsStream = null;
+                afsStream = Stream.Null;
                 leaveAfsStreamOpen = true;
             }
 
@@ -207,7 +207,7 @@ namespace AFSLib
                     {
                         offsets[e] = currentEntryOffset;
 
-                        DataEntry dataEntry = entries[e] as DataEntry;
+                        DataEntry dataEntry = (DataEntry)entries[e];
                         currentEntryOffset += dataEntry.Size;
                         currentEntryOffset = Utils.Pad(currentEntryOffset, ALIGNMENT_SIZE);
                     }
@@ -226,7 +226,7 @@ namespace AFSLib
                     }
                     else
                     {
-                        DataEntry dataEntry = entries[e] as DataEntry;
+                        DataEntry dataEntry = (DataEntry)entries[e];
 
                         bw.Write(offsets[e]);
                         bw.Write(dataEntry.Size);
@@ -290,7 +290,7 @@ namespace AFSLib
                         {
                             NotifyProgress?.Invoke(NotificationType.Info, $"Writing attribute... {e + 1}/{EntryCount}");
 
-                            DataEntry dataEntry = entries[e] as DataEntry;
+                            DataEntry dataEntry = (DataEntry)entries[e];
 
                             byte[] name = Encoding.Default.GetBytes(dataEntry.Name);
                             outputStream.Write(name, 0, name.Length);
@@ -327,7 +327,7 @@ namespace AFSLib
         /// <param name="fileNamePath">Path to the file that will be added.</param>
         /// <param name="entryName">The name of the entry. If null, it will be the name of the file in fileNamePath.</param>
         /// <returns>A reference to the added entry.</returns>
-        public FileEntry AddEntryFromFile(string fileNamePath, string entryName = null)
+        public FileEntry AddEntryFromFile(string fileNamePath, string? entryName = null)
         {
             CheckDisposed();
 
@@ -480,7 +480,7 @@ namespace AFSLib
                 throw new ArgumentNullException(nameof(outputFilePath));
             }
 
-            string directory = Path.GetDirectoryName(outputFilePath);
+            string? directory = Path.GetDirectoryName(outputFilePath);
             if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
             {
                 Directory.CreateDirectory(directory);
@@ -494,7 +494,7 @@ namespace AFSLib
 
             if (ContainsAttributes)
             {
-                DataEntry dataEntry = entry as DataEntry;
+                DataEntry dataEntry = (DataEntry)entry;
 
                 try
                 {
@@ -533,7 +533,7 @@ namespace AFSLib
 
                 NotifyProgress?.Invoke(NotificationType.Info, $"Extracting entry... {e + 1}/{EntryCount}");
 
-                DataEntry dataEntry = entries[e] as DataEntry;
+                DataEntry dataEntry = (DataEntry)entries[e];
 
                 string outputFilePath = Path.Combine(outputDirectory, dataEntry.SanitizedName);
                 if (File.Exists(outputFilePath))
@@ -691,7 +691,7 @@ namespace AFSLib
         {
             entries.Add(entry);
 
-            DataEntry dataEntry = entry as DataEntry;
+            DataEntry dataEntry = (DataEntry)entry;
             if (dataEntry != null)
             {
                 dataEntry.NameChanged += UpdateSanitizedEntriesNames;
@@ -700,7 +700,7 @@ namespace AFSLib
 
         private void Internal_RemoveEntry(Entry entry)
         {
-            DataEntry dataEntry = entry as DataEntry;
+            DataEntry dataEntry = (DataEntry)entry;
             if (dataEntry != null)
             {
                 dataEntry.NameChanged -= UpdateSanitizedEntriesNames;
@@ -745,7 +745,7 @@ namespace AFSLib
             {
                 if (entries[e] is NullEntry) continue;
 
-                DataEntry dataEntry = entries[e] as DataEntry;
+                DataEntry dataEntry = (DataEntry)entries[e];
 
                 string sanitizedName = SanitizeName(dataEntry.Name);
 
@@ -823,7 +823,7 @@ namespace AFSLib
         /// </summary>
         public static Version GetVersion()
         {
-            return Assembly.GetExecutingAssembly().GetName().Version;
+            return Assembly.GetExecutingAssembly().GetName().Version!;
         }
 
         #endregion

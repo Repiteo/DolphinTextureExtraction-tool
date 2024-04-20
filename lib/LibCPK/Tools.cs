@@ -37,7 +37,7 @@ namespace LibCPK
             Dictionary<string, string> flist = new Dictionary<string, string>();
 
             StreamReader sr = new StreamReader(batch_script_name, Encoding.Default);
-            String line;
+            string? line;
             while ((line = sr.ReadLine()) != null)
             {
                 if (line.IndexOf(",") > -1)
@@ -56,7 +56,7 @@ namespace LibCPK
             return flist;
         }
 
-        public static string ReadCString(BinaryReader br, int MaxLength = -1, long lOffset = -1, Encoding enc = null)
+        public static string ReadCString(BinaryReader br, int MaxLength = -1, long lOffset = -1, Encoding? enc = null)
         {
             int Max;
             if (MaxLength == -1)
@@ -125,10 +125,9 @@ namespace LibCPK
 
         public static byte[] GetData(BinaryReader br, long offset, int size)
         {
-            byte[] result = null;
             long backup = br.BaseStream.Position;
             br.BaseStream.Seek(offset, SeekOrigin.Begin);
-            result = br.ReadBytes(size);
+            byte[] result = br.ReadBytes(size);
             br.BaseStream.Seek(backup, SeekOrigin.Begin);
             return result;
         }

@@ -12,7 +12,7 @@
 
         internal override Stream GetStream()
         {
-            return null;
+            return Stream.Null;
         }
     }
 }

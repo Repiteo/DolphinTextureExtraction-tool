@@ -1,8 +1,10 @@
-﻿namespace AFSLib
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace AFSLib
 {
     class SubStream : Stream
     {
-        private Stream baseStream;
+        private Stream? baseStream;
         private readonly long origin;
         private readonly long length;
         private readonly bool leaveBaseStreamOpen;
@@ -35,6 +37,7 @@
             return baseStream.Read(buffer, offset, count);
         }
 
+        [MemberNotNull(nameof(baseStream))]
         private void CheckDisposed()
         {
             if (baseStream == null) throw new ObjectDisposedException(GetType().Name);

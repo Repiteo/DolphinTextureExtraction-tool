@@ -143,7 +143,7 @@ namespace LibCPK
             set { isLittleEndian = value; }
         }
 
-        public void Write<T>(T value)
+        public void Write<T>(T value) where T : struct
         {
             dynamic input = value;
             byte[] someBytes = BitConverter.GetBytes(input);

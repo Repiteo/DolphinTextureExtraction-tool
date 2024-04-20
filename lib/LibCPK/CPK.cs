@@ -7,22 +7,22 @@ namespace LibCPK
     public class CPK
     {
         public List<FileEntry> fileTable = new List<FileEntry>();
-        public Dictionary<string, object> cpkdata;
-        public UTF utf;
-        UTF files;
+        public Dictionary<string, object> cpkdata = new();
+        public UTF utf = new();
+        UTF files = new();
 
         public CPK()
         {
             isUtfEncrypted = false;
         }
 
-        public void ReadCPK(string sPath, Encoding encoding = null)
+        public void ReadCPK(string sPath, Encoding? encoding = null)
         {
             using (Stream stream = File.OpenRead(sPath))
                 ReadCPK(stream, encoding);
         }
 
-        public void ReadCPK(Stream stream, Encoding encoding = null)
+        public void ReadCPK(Stream stream, Encoding? encoding = null)
         {
             uint Files;
             ushort Align;
@@ -55,7 +55,7 @@ namespace LibCPK
             ms = new MemoryStream(utf_packet);
             utfr = new EndianReader(ms, false);
 
-            utf = new UTF();
+            utf.Clear();
             if (!utf.ReadUTF(utfr, encoding))
             {
                 br.Close();
@@ -65,7 +65,7 @@ namespace LibCPK
             utfr.Close();
             ms.Close();
 
-            cpkdata = new Dictionary<string, object>();
+            cpkdata.Clear();
 
             try
             {
@@ -137,7 +137,6 @@ namespace LibCPK
             // at this point, we should have all needed file info
 
             //utf = null;
-            files = null;
         }
 
 
@@ -158,7 +157,7 @@ namespace LibCPK
             return entry;
         }
 
-        public bool ReadTOC(EndianReader br, ulong TocOffset, ulong ContentOffset, Encoding encoding = null)
+        public bool ReadTOC(EndianReader br, ulong TocOffset, ulong ContentOffset, Encoding? encoding = null)
         {
             ulong fTocOffset = TocOffset;
             ulong add_offset = 0;
@@ -202,7 +201,7 @@ namespace LibCPK
             MemoryStream ms = new MemoryStream(utf_packet);
             EndianReader utfr = new EndianReader(ms, false);
 
-            files = new UTF();
+            files.Clear();
             if (!files.ReadUTF(utfr, encoding))
             {
                 br.Close();
@@ -243,7 +242,6 @@ namespace LibCPK
 
                 fileTable.Add(temp);
             }
-            files = null;
 
             return true;
         }
@@ -327,7 +325,7 @@ namespace LibCPK
             MemoryStream ms = new MemoryStream(utf_packet);
             EndianReader utfr = new EndianReader(ms, false);
 
-            files = new UTF();
+            files.Clear();
             if (!files.ReadUTF(utfr))
             {
                 br.Close();
@@ -345,7 +343,6 @@ namespace LibCPK
 
             //MemoryStream ms;
             //EndianReader ir;
-            UTF utfDataL, utfDataH;
             Dictionary<int, uint> SizeTable, CSizeTable;
             Dictionary<int, long> SizePosTable, CSizePosTable;
             Dictionary<int, Type> SizeTypeTable, CSizeTypeTable;
@@ -369,7 +366,7 @@ namespace LibCPK
             {
                 ms = new MemoryStream(DataL);
                 utfr = new EndianReader(ms, false);
-                utfDataL = new UTF();
+                UTF utfDataL = new();
                 utfDataL.ReadUTF(utfr);
 
                 for (int i = 0; i < utfDataL.num_rows; i++)
@@ -404,7 +401,7 @@ namespace LibCPK
             {
                 ms = new MemoryStream(DataH);
                 utfr = new EndianReader(ms, false);
-                utfDataH = new UTF();
+                UTF utfDataH = new();
                 utfDataH.ReadUTF(utfr);
 
                 for (int i = 0; i < utfDataH.num_rows; i++)
@@ -454,7 +451,7 @@ namespace LibCPK
 
                 temp.TOCName = TOCFlag.ITOC;
 
-                temp.DirName = null;
+                temp.DirName = string.Empty;
                 temp.FileName = id.ToString() + ".bin";
 
                 temp.FileSize = value;
@@ -473,7 +470,7 @@ namespace LibCPK
 
                 temp.FileOffset = baseoffset;
                 temp.ID = id;
-                temp.UserString = null;
+                temp.UserString = string.Empty;
 
                 fileTable.Add(temp);
 
@@ -485,10 +482,6 @@ namespace LibCPK
 
                 //id++;
             }
-
-            files = null;
-            utfDataL = null;
-            utfDataH = null;
 
             ms.Close();
             utfr.Close();
@@ -613,10 +606,32 @@ namespace LibCPK
 
         public object GetColumsData(UTF utf, int row, string Name, E_ColumnDataType type)
         {
-            object Temp = GetColumnData(utf, row, Name);
+            object? Temp;
 
-            if (Temp == null)
+            try
             {
+                Temp = GetColumnData(utf, row, Name);
+                if (Temp is ulong)
+                {
+                    return (ulong)Temp;
+                }
+                if (Temp is uint)
+                {
+                    return (uint)Temp;
+                }
+                if (Temp is ushort)
+                {
+                    return (ushort)Temp;
+                }
+                if (Temp is byte)
+                {
+                    return (byte)Temp;
+                }
+            }
+
+            catch (Exception ex)
+            {
+                Debug.Print(ex.ToString());
                 switch (type)
                 {
                     case E_ColumnDataType.DATA_TYPE_BYTE: // byte
@@ -630,70 +645,35 @@ namespace LibCPK
                 }
             }
 
-            if (Temp is ulong)
-            {
-                return (Temp == null) ? 0xFFFFFFFFFFFFFFFF : (ulong)Temp;
-            }
-
-            if (Temp is uint)
-            {
-                return (Temp == null) ? 0xFFFFFFFF : (uint)Temp;
-            }
-
-            if (Temp is ushort)
-            {
-                return (Temp == null) ? (ushort)0xFFFF : (ushort)Temp;
-            }
-
-            if (Temp is byte)
-            {
-                return (Temp == null) ? (byte)0xFF : (byte)Temp;
-            }
-
             return 0;
         }
 
         private object GetColumnData(UTF utf, int row, string pName)
         {
-            object result = null;
-
-            try
+            for (int i = 0; i < utf.num_columns; i++)
             {
-                for (int i = 0; i < utf.num_columns; i++)
+                int storageFlag = utf.columns[i].flags & (int)UTF.COLUMN_FLAGS.STORAGE_MASK;
+                int columnType = utf.columns[i].flags & (int)UTF.COLUMN_FLAGS.TYPE_MASK;
+                if (storageFlag == (int)UTF.COLUMN_FLAGS.STORAGE_CONSTANT)
                 {
-                    int storageFlag = utf.columns[i].flags & (int)UTF.COLUMN_FLAGS.STORAGE_MASK;
-                    int columnType = utf.columns[i].flags & (int)UTF.COLUMN_FLAGS.TYPE_MASK;
-                    if (storageFlag == (int)UTF.COLUMN_FLAGS.STORAGE_CONSTANT)
-                    {
-                        if (utf.columns[i].name == pName)
-                        {
-                            result = utf.columns[i].GetValue();
-                            break;
-                        }
-                    }
-
-                    if (storageFlag == (int)UTF.COLUMN_FLAGS.STORAGE_NONE || storageFlag == (int)UTF.COLUMN_FLAGS.STORAGE_ZERO)
-                    {
-                        continue;
-                    }
-
                     if (utf.columns[i].name == pName)
                     {
-                        result = utf.rows[row].rows[i].GetValue();
-                        break;
+                        return utf.columns[i].GetValue();
                     }
                 }
+
+                if (storageFlag == (int)UTF.COLUMN_FLAGS.STORAGE_NONE || storageFlag == (int)UTF.COLUMN_FLAGS.STORAGE_ZERO)
+                {
+                    continue;
+                }
+
+                if (utf.columns[i].name == pName)
+                {
+                    return utf.rows[row].rows[i].GetValue();
+                }
             }
-            catch (Exception ex)
-            {
 
-                Debug.Print(ex.ToString());
-                return null;
-            }
-
-
-
-            return result;
+            throw new KeyNotFoundException();
         }
 
         public long GetColumnPostion(UTF utf, int row, string pName)
@@ -738,48 +718,36 @@ namespace LibCPK
 
         public Type GetColumnType(UTF utf, int row, string pName)
         {
-            Type result = null;
-
-            try
+            for (int i = 0; i < utf.num_columns; i++)
             {
-                for (int i = 0; i < utf.num_columns; i++)
+                int storageFlag = utf.columns[i].flags & (int)UTF.COLUMN_FLAGS.STORAGE_MASK;
+                int columnType = utf.columns[i].flags & (int)UTF.COLUMN_FLAGS.TYPE_MASK;
+                if (storageFlag == (int)UTF.COLUMN_FLAGS.STORAGE_CONSTANT)
                 {
-                    int storageFlag = utf.columns[i].flags & (int)UTF.COLUMN_FLAGS.STORAGE_MASK;
-                    int columnType = utf.columns[i].flags & (int)UTF.COLUMN_FLAGS.TYPE_MASK;
-                    if (storageFlag == (int)UTF.COLUMN_FLAGS.STORAGE_CONSTANT)
-                    {
-                        if (utf.columns[i].name == pName)
-                        {
-                            result = utf.columns[i].GetType();
-                            break;
-                        }
-                    }
-
-                    if (storageFlag == (int)UTF.COLUMN_FLAGS.STORAGE_NONE || storageFlag == (int)UTF.COLUMN_FLAGS.STORAGE_ZERO)
-                    {
-                        continue;
-                    }
                     if (utf.columns[i].name == pName)
                     {
-                        result = utf.rows[row].rows[i].GetType();
-                        break;
+                        return utf.columns[i].GetType();
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                Debug.Print(ex.ToString());
-                return null;
+
+                if (storageFlag == (int)UTF.COLUMN_FLAGS.STORAGE_NONE || storageFlag == (int)UTF.COLUMN_FLAGS.STORAGE_ZERO)
+                {
+                    continue;
+                }
+                if (utf.columns[i].name == pName)
+                {
+                    return utf.rows[row].rows[i].GetType();
+                }
             }
 
-            return result;
+            throw new KeyNotFoundException();
         }
 
         public void UpdateFileEntry(FileEntry fileEntry)
         {
             if (fileEntry.FileType == FileTypeFlag.FILE || fileEntry.FileType == FileTypeFlag.HDR)
             {
-                byte[] updateMe = null;
+                byte[] updateMe = Array.Empty<byte>();
                 switch (fileEntry.TOCName)
                 {
                     case TOCFlag.CPK:
@@ -890,13 +858,13 @@ namespace LibCPK
         public bool isUtfEncrypted { get; set; }
         public int unk1 { get; set; }
         public long utf_size { get; set; }
-        public byte[] utf_packet { get; set; }
+        public byte[] utf_packet { get; set; } = Array.Empty<byte>();
 
-        public byte[] CPK_packet { get; set; }
-        public byte[] TOC_packet { get; set; }
-        public byte[] ITOC_packet { get; set; }
-        public byte[] ETOC_packet { get; set; }
-        public byte[] GTOC_packet { get; set; }
+        public byte[] CPK_packet { get; set; } = Array.Empty<byte>();
+        public byte[] TOC_packet { get; set; } = Array.Empty<byte>();
+        public byte[] ITOC_packet { get; set; } = Array.Empty<byte>();
+        public byte[] ETOC_packet { get; set; } = Array.Empty<byte>();
+        public byte[] GTOC_packet { get; set; } = Array.Empty<byte>();
 
         public ulong TocOffset, EtocOffset, ItocOffset, GtocOffset, ContentOffset;
     }
@@ -935,16 +903,25 @@ namespace LibCPK
 
 
 
-        public List<COLUMN> columns;
-        public List<ROWS> rows;
+        public List<COLUMN> columns = new();
+        public List<ROWS> rows = new();
 
-        public UTF()
+        public void Clear()
         {
-
+            columns.Clear();
+            rows.Clear();
+            table_size = 0;
+            rows_offset = 0;
+            strings_offset = 0;
+            data_offset = 0;
+            table_name = 0;
+            num_columns = 0;
+            row_length = 0;
+            num_rows = 0;
         }
 
 
-        public bool ReadUTF(EndianReader br, Encoding encoding = null)
+        public bool ReadUTF(EndianReader br, Encoding? encoding = null)
         {
             long offset = br.BaseStream.Position;
 
@@ -1066,7 +1043,7 @@ namespace LibCPK
 
 
         public byte flags { get; set; }
-        public string name { get; set; }
+        public string name { get; set; } = string.Empty;
 
 
     }
@@ -1107,7 +1084,7 @@ namespace LibCPK
 
                 case (int)E_StructTypes.DATA_TYPE_BYTEARRAY: return this.data;
 
-                default: return null;
+                default: throw new NullReferenceException();
             }
         }
 
@@ -1135,11 +1112,11 @@ namespace LibCPK
 
                 case (int)E_StructTypes.DATA_TYPE_BYTEARRAY: return this.data.GetType();
 
-                default: return null;
+                default: throw new NullReferenceException();
             }
         }
 
-        public void UpdateTypedData(EndianReader br, int flags, long strings_offset, long data_offset, Encoding encoding)
+        public void UpdateTypedData(EndianReader br, int flags, long strings_offset, long data_offset, Encoding? encoding)
         {
             int type = flags & (int)UTF.COLUMN_FLAGS.TYPE_MASK;
             this.type = type;
@@ -1170,7 +1147,7 @@ namespace LibCPK
                     this.ufloat = br.ReadSingle();
                     break;
 
-                case 0xA:
+                case (int)E_StructTypes.DATA_TYPE_STRING:
                     this.str = Tools.ReadCString(br, -1, br.ReadInt32() + strings_offset, encoding);
 
                     break;
@@ -1190,8 +1167,8 @@ namespace LibCPK
         public uint uint32 { get; set; }
         public ulong uint64 { get; set; }
         public float ufloat { get; set; }
-        public string str { get; set; }
-        public byte[] data { get; set; }
+        public string str { get; set; } = string.Empty;
+        public byte[] data { get; set; } = Array.Empty<byte>();
         public long position { get; set; }
     }
 
@@ -1209,13 +1186,16 @@ namespace LibCPK
     {
         public FileEntry()
         {
-            DirName = null;
-            FileName = null;
-            FileSize = null;
-            ExtractSize = null;
-            ID = null;
-            UserString = null;
-            LocalDir = null;
+            DirName = string.Empty;
+            FileName = string.Empty;
+            FileSize = null!;
+            ExtractSize = null!;
+            ID = null!;
+            FileSizeType = null!;
+            ExtractSizeType = null!;
+            FileOffsetType = null!;
+            UserString = string.Empty;
+            LocalDir = string.Empty;
 
             FileOffset = 0;
             UpdateDateTime = 0;
