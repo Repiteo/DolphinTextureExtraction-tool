@@ -14,7 +14,7 @@ Additionally, the tool supports unpacking all compatible formats and some other 
 Although the most common formats are already supported, the tool is still under development and new functions and other formats will be added over time.
 
 ## Download
-This is a .NET 6.0 application and requires the .NET Runtime 6.0. If you don't have it installed yet, you can download it from [here](https://dotnet.microsoft.com/en-us/download/dotnet/6.0).
+This is a .NET 8.0 application and requires the .NET Runtime 8.0. If you don't have it installed yet, you can download it from [here](https://dotnet.microsoft.com/en-us/download/dotnet/8.0).
 
 [<img src="https://img.shields.io/github/v/release/Venomalia/DolphinTextureExtraction-tool?style=for-the-badge" alt="Release Download" height="34"/>](https://github.com/Venomalia/DolphinTextureExtraction-tool/releases/latest)
 
@@ -49,13 +49,11 @@ List of all [commands](https://github.com/Venomalia/DolphinTextureExtraction-too
 
 - [ImageSharp](https://github.com/SixLabors/ImageSharp) used as graphics API.
 
-- [Hack.io](https://github.com/SuperHackio/Hack.io) to read RARC, U8, YAZ, YAY, BTI, TPL, TEX1, BMD and BDL Format
+- [Hack.io](https://github.com/SuperHackio/Hack.io) Code reference for RARC, U8, BTI, TPL, TEX1, BMD and BDL Format.
 
 - [Puyo Tools](https://github.com/nickworonekin/puyotools) Code reference for ONE GVMH, GBIX, GCIX, GVRT, Format.
 
 - [HashDepot](https://github.com/ssg/HashDepot) used for xxHash generation
-
-- [Ironcompress](https://github.com/aloneguid/ironcompress) used for LZO, LZ4 and Zstandard.
 
 - [SevenZip](https://github.com/adoconnection/SevenZipExtractor) to read formats supported by 7Zip
 	
@@ -79,3 +77,6 @@ List of all [commands](https://github.com/Venomalia/DolphinTextureExtraction-too
 
 - [Helco](https://github.com/Helco/Pitfall) reference for LFXT Format.
 
+- [Endless-Ocean-Files-Converter](https://github.com/NiV-L-A/Endless-Ocean-Files-Converter) reference for TDL0 Format.
+
+- [Dolphin](https://github.com/dolphin-emu/dolphin/blob/master/docs/WiaAndRvz.md) reference for RVZ Format.

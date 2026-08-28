@@ -1,4 +1,4 @@
-﻿using AuroraLib.Archives.Formats;
+using AuroraLib.Archives.Formats.Nintendo;
 using AuroraLib.Common;
 using AuroraLib.Core.Interfaces;
 
@@ -52,7 +52,7 @@ namespace AuroraLib.Texture.Formats
             uint Unknown2 = stream.ReadUInt32(ByteOrder);
             ushort NameLength = stream.ReadUInt16(ByteOrder);
             ushort Unknown3 = stream.ReadUInt16(ByteOrder);
-            string Name = stream.ReadString();
+            string Name = stream.ReadCString();
             stream.Position = SubfilePosition;
 #if DEBUG
             if (Unknown != 0 || Unknown2 != 0 || Unknown3 != 0)
@@ -85,19 +85,23 @@ namespace AuroraLib.Texture.Formats
 
             if (FormatVersion >= 11)
             {
-                byte[] Unknown4 = stream.Read(32);
 #if DEBUG
+                byte[] Unknown4 = new byte[32];
+                stream.Read(Unknown4);
                 Events.NotificationEvent.Invoke(NotificationType.Info, $"{nameof(REFT)},{nameof(Unknown4)}: " + BitConverter.ToString(Unknown4));
+#else
+                stream.Skip(32);
 #endif
             }
 
-            ReadOnlySpan<byte> PaletteData = null;
+            Memory<byte> PaletteData = Memory<byte>.Empty;
             if (Header.Format.IsPaletteFormat())
             {
-                PaletteData = stream.At(Header.ImageDataSize, SeekOrigin.Current, s => s.Read((int)Header.PaletteSize));
+                PaletteData = new byte[Header.PaletteSize];
+                stream.At(Header.ImageDataSize, SeekOrigin.Current, s => s.Read(PaletteData.Span));
             }
 
-            TexEntry current = new(stream, PaletteData, Header.Format, Header.PaletteFormat, Header.Palettes, Header.Width, Header.Height, Header.Mipmaps)
+            TexEntry current = new(stream, PaletteData.Span, Header.Format, Header.PaletteFormat, Header.Palettes, Header.Width, Header.Height, Header.Mipmaps)
             {
                 LODBias = Header.LODBias,
                 MagnificationFilter = Header.MaxFilter,
